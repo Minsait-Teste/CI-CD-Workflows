@@ -1,55 +1,93 @@
 name: Test CI Workflow
 
-on:
-  workflow_call:
+on: # Definition of events to trigger workflows
+  workflow_call: 
+    secrets:
+      SONAR_TOKEN:
+        required: true
+      SONAR_PROJECT_KEY:
+        required: true
+      SONAR_ORGANIZATION:
+        required: true
 
-jobs: 
-  validate_files: 
-    runs-on: ubuntu-latest 
-    steps: 
+jobs:
+  validate_files:
+    runs-on: ubuntu-latest
+    steps:
       - name: Checkout code
-        uses: actions/checkout@v3 
+        uses: actions/checkout@v3
 
-      - name: Check if tsconfig.json exists 
-        run: | 
-          if [ ! -f tsconfig.json ]; then 
+      - name: Check if tsconfig.json exists
+        run: |
+          if [ ! -f tsconfig.json ]; then
             echo "🚨 ERROR: tsconfig.json is missing. It is required for the build process."
             exit 1
           fi
-        shell: bash 
+        shell: bash
 
   build_and_test:
-    runs-on: ubuntu-latest 
-    needs: validate_files 
+    runs-on: ubuntu-latest
+    needs: validate_files
     env:
-      NODE_VERSION: 18 
+      NODE_VERSION: 18
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3 
+        uses: actions/checkout@v3
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3 
+        uses: actions/setup-node@v3
         with:
-          node-version: ${{ env.NODE_VERSION }} 
-          cache: 'npm' 
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm install 
-
-      - name: Run unit tests
-        run: npm run test 
+        run: npm install
 
       - name: Build the application
-        run: npm run build 
+        run: npm run build
 
-      - name: Copy package-json and prisma to dist
-        run: npm run postbuild 
+      - name: Run unit tests
+        run: npm run test
 
-      - name: Upload Release Artifact 
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-artifact 
-          path: dist/**
+  #     - name: Run SonarQube analysis
+  #       if: github.ref == 'refs/heads/main'
+  #       run: |
+  #         npx sonar-scanner \
+  #           -Dsonar.host.url=https://sonarcloud.io \
+  #           -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
+  #           -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
+  #           -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
+  #           -Dsonar.sources=src \
+  #           -Dsonar.tests=src/tests \
+  #           -Dsonar.exclusions=**/*.test.ts \
+  #           -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #         SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+  #         SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
 
-          
+  # ## Blocks pipeline if did not pass quality gate. Activate only for production
+  #     - name: SonarCloud Quality Gate
+  #       if: github.ref == 'refs/heads/main'
+  #       uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
+  #       timeout-minutes: 5
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #         SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+  #         SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
+
+  docker-build_and_push:
+    runs-on: ubuntu-latest
+    needs: build_and_test
+    env:
+      ecr_repo: aws-bootcamp-class5
+      aws_region: us-east-1
+      tag: 1
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: docker build -t ${{ env.ecr_repo }} .
