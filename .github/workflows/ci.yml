@@ -74,7 +74,7 @@ jobs:
           npx sonar-scanner \
             -Dsonar.host.url=https://sonarcloud.io \
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
-            -Dsonar.organization=${{ secrets.SSONAR_ORGANIZATION }} \
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }} \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
             -Dsonar.sources=src \
             -Dsonar.tests=src/tests \
