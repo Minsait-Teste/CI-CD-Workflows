@@ -1,6 +1,6 @@
 name: Test CI Workflow
 
-on: # Definition of events to trigger workflows
+on: 
   workflow_call: 
     secrets:
       SONAR_TOKEN:
@@ -8,6 +8,10 @@ on: # Definition of events to trigger workflows
       SONAR_PROJECT_KEY:
         required: true
       SONAR_ORGANIZATION:
+        required: true
+      AWS_ACCESS_KEY_ID:
+        required: true
+      AWS_SECRET_ACCESS_KEY:
         required: true
 
 jobs:
@@ -67,7 +71,6 @@ jobs:
           SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
           SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
 
-  ## Blocks pipeline if did not pass quality gate. Activate only for production
       - name: SonarCloud Quality Gate
         if: github.ref == 'refs/heads/main'
         uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
@@ -77,3 +80,37 @@ jobs:
           SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
           SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
 
+  docker_build_and_push:
+    runs-on: ubuntu-latest
+    needs: build_and_test
+    if: github.ref == 'refs/heads/main'
+    env:
+      ecr_repo: aws-bootcamp-class5
+      aws_region: us-east-1
+      tag: latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: docker build -t ${{ env.ecr_repo }} .
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5.1.1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.aws_region }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Tag and Push Image to ECR
+        id: docker-tag-push  
+        env:
+          ecr_registry: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+          docker tag ${{ env.ecr_repo }}:${{ env.tag }} ${{ env.ecr_registry }}/${{ env.ecr_repo }}:${{ env.tag }}
+          docker push ${{ env.ecr_registry }}/${{ env.ecr_repo }}:${{ env.tag }}

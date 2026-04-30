@@ -1,6 +1,6 @@
-name: Test CI Workflow
+name: CI Workflow
 
-on: # Definition of events to trigger workflows
+on: 
   workflow_call: 
     secrets:
       SONAR_TOKEN:
@@ -81,7 +81,7 @@ jobs:
   #         SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
   #         SONAR_ORGANIZATION: ${{ secrets.SONAR_ORGANIZATION }}
 
-  docker-build_and_push:
+  docker_build_and_push:
     runs-on: ubuntu-latest
     needs: build_and_test
     env:
@@ -108,7 +108,7 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Tag and Push Image to ECR
-        id: docker-tag  
+        id: docker-tag-push  
         env:
           ecr_registry: ${{ steps.login-ecr.outputs.registry }}
         run: |
