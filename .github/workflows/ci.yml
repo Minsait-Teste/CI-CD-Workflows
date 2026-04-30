@@ -119,9 +119,7 @@ jobs:
     needs: docker_build_and_push
     if: github.ref == 'refs/heads/main'
     uses: Minsait-Teste/CI-CD-Workflows/.github/workflows/cd.yml@main
-    env:
-      tag: latest
     with:
-      image_tag: ${{ env.tag }}
+      image_tag: 'latest'
     secrets: inherit
 
