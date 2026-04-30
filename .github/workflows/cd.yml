@@ -1,0 +1,47 @@
+# name: Test CD Workflow
+
+# on:
+#   workflow_call:
+
+# jobs:
+#     deploy:
+#     runs-on: ubuntu-latest
+#     environment: stage 
+#     steps:
+#       - name: Download Release Artifact
+#         uses: actions/download-artifact@v4 # Vai baixar o artefato que foi carregado no step anterior
+#         with:
+#           name: release-artifact # Nome do artefato que vai ser baixado
+#           path: . # Ele será extraído no diretório atual, poderia criar uma pasta para artefatos
+
+#       - name: Set up SSH # Autenticação SSH para permitir que o workflow se conecte a uma instância EC2
+#         # Cria o diretório .ssh, que é usado para armazenar chaves
+#         # Armazena a chave que foi gerada na AWS e armazenada manualmente no github como um secret
+#         # Configura as permissões necessárias na chave, para que apenas o owner possa acessá-la
+#         # Adiciona a chave no hosts, necessário para a primeira conexão. o || true não vai interromper o workflow em caso de falha
+#         run: |
+#           mkdir -p ~/.ssh
+#           echo "${{ secrets.EC2_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+#           chmod 600 ~/.ssh/id_rsa
+#           ssh-keyscan -H ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts || true
+
+#       - name: Deploy to EC2
+#       # scp: Copia arquivos entre maquinas. -r: Cópia recursiva, ou seja, copia tudo dentro do dist 
+#       # -o ...: Não solicita a verificação de chave do host, porém diminui a segurança
+#       # Se eu tivesse só copiado o dist pro artefato, o ./dist seria omitido
+#       # ssh -o: Se conecta a instancia via ssh sema  verificação de chave do host
+#       # Condição: Reinicia a app se estiver em andamento ou roda uma nova]
+#       # pm2: Usado para gerenciar aplicações node, ele pode iniciar a app e finalizar a pipeline sem desligar o app da instancia
+#         run: |
+#           scp -r -o StrictHostKeyChecking=no ./dist ubuntu@${{ secrets.EC2_HOST }}:/home/ubuntu/app
+#           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} "
+#             export DATABASE_URL='${{ secrets.DATABASE_URL }}' &&
+#             export JWT_SECRET_KEY='${{ secrets.JWT_SECRET_KEY }}' &&
+#             cd /home/ubuntu/app/dist &&
+#             npx prisma generate &&
+#             if pm2 list | grep -q 'my-app'; then
+#               pm2 restart my-app;
+#             else
+#               pm2 start /home/ubuntu/app/dist/index.js --name my-app;
+#             fi
+#           "
