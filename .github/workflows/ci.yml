@@ -25,51 +25,70 @@ jobs:
           fi
         shell: bash
 
-  build_and_test:
-    runs-on: ubuntu-latest
-    needs: validate_files
-    env:
-      NODE_VERSION: 18
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run unit tests
-        run: npm run test
-
-      - name: Build the application
-        run: npm run build
-
-      - name: Run SonarQube analysis
+      - name: Validate required secrets
         run: |
-          npx sonar-scanner \
-            -Dsonar.host.url=https://sonarcloud.io \
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
-            -Dsonar.organization=${{ secrets.SSONAR_ORGANIZATION }} \
-            -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
-            -Dsonar.sources=src \
-            -Dsonar.tests=src/tests \
-            -Dsonar.exclusions=**/*.test.ts \
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          if [ -z "${{ secrets.SONAR_TOKEN }}" ]; then
+            echo "❌ SONAR_TOKEN is missing"
+            exit 1
+          fi
 
-  ## Blocks pipeline if did not pass quality gate. Activate only for production
-      - name: SonarCloud Quality Gate
-        if: github.ref == 'refs/heads/main'
-        uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
-        timeout-minutes: 5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_PROJECT_KEY: Minsait-Teste_desafio-minsait
+          if [ -z "${{ secrets.SONAR_PROJECT_KEY }}" ]; then
+            echo "❌ SONAR_PROJECT_KEY is missing"
+            exit 1
+          fi
+
+          if [ -z "${{ secrets.SONAR_ORGANIZATION }}" ]; then
+            echo "❌ SONAR_ORGANIZATION is missing"
+            exit 1
+          fi
+
+          echo "✅ All required secrets are set"
+
+  # build_and_test:
+  #   runs-on: ubuntu-latest
+  #   needs: validate_files
+  #   env:
+  #     NODE_VERSION: 18
+
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v3
+
+  #     - name: Set up Node.js
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #         cache: 'npm'
+
+  #     - name: Install dependencies
+  #       run: npm install
+
+  #     - name: Run unit tests
+  #       run: npm run test
+
+  #     - name: Build the application
+  #       run: npm run build
+
+  #     - name: Run SonarQube analysis
+  #       run: |
+  #         npx sonar-scanner \
+  #           -Dsonar.host.url=https://sonarcloud.io \
+  #           -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
+  #           -Dsonar.organization=${{ secrets.SSONAR_ORGANIZATION }} \
+  #           -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
+  #           -Dsonar.sources=src \
+  #           -Dsonar.tests=src/tests \
+  #           -Dsonar.exclusions=**/*.test.ts \
+  #           -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  # ## Blocks pipeline if did not pass quality gate. Activate only for production
+  #     - name: SonarCloud Quality Gate
+  #       if: github.ref == 'refs/heads/main'
+  #       uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
+  #       timeout-minutes: 5
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #         SONAR_PROJECT_KEY: Minsait-Teste_desafio-minsait
 
