@@ -114,3 +114,11 @@ jobs:
         run: |
           docker tag ${{ env.ecr_repo }}:${{ env.tag }} ${{ env.ecr_registry }}/${{ env.ecr_repo }}:${{ env.tag }}
           docker push ${{ env.ecr_registry }}/${{ env.ecr_repo }}:${{ env.tag }}
+  
+  call_cd_workflow:
+    needs: docker_build_and_push
+    uses: Minsait-Teste/CI-CD-Workflows/.github/workflows/cd.yml@main
+    with:
+      image_tag: ${{ env.tag }}
+    secrets: inherit
+
