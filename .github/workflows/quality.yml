@@ -15,7 +15,6 @@ on: # Definition of events to trigger workflows
 jobs:
   build_and_test:
     runs-on: ubuntu-latest
-    needs: validate_files
     env:
       NODE_VERSION: 18
 
