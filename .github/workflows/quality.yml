@@ -5,12 +5,10 @@ on: # Definition of events to trigger workflows
     secrets:
       SONAR_TOKEN:
         required: true
-      # SONAR_PROJECT_KEY:
-      #   required: true
-      # SONAR_ORGANIZATION:
-      #   required: true
-      # SONAR_HOST_URL:
-      #   required: true
+      SONAR_PROJECT_KEY:
+        required: true
+      SONAR_ORGANIZATION:
+        required: true
 
 jobs:
   build_and_test:
@@ -40,9 +38,9 @@ jobs:
       - name: Run SonarQube analysis
         run: |
           npx sonar-scanner \
-            -Dsonar.projectKey=Minsait-Teste_ecs-backend \
-            -Dsonar.organization=minsait-teste \
             -Dsonar.host.url=https://sonarcloud.io \
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }} \
+            -Dsonar.organization=${{ secrets.SSONAR_ORGANIZATION }} \
             -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
             -Dsonar.sources=src \
             -Dsonar.tests=src/tests \
