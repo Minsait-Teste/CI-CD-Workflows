@@ -57,6 +57,7 @@ jobs:
         run: npm run build
 
       - name: Run SonarQube analysis
+        if: github.ref == 'refs/heads/main'
         run: |
           npx sonar-scanner \
             -Dsonar.projectKey=Minsait-Teste_ecs-backend \
@@ -72,6 +73,7 @@ jobs:
 
   ## Blocks pipeline if did not pass quality gate. Activate only for production
       - name: SonarCloud Quality Gate
+        if: github.ref == 'refs/heads/main'
         uses: SonarSource/sonarqube-quality-gate-action@v1.1.0
         timeout-minutes: 5
         env:
