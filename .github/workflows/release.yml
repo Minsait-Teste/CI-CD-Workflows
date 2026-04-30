@@ -87,7 +87,7 @@ jobs:
     env:
       ecr_repo: aws-bootcamp-class5
       aws_region: us-east-1
-      tag: 1
+      tag: latest
 
     steps:
       - name: Checkout code
@@ -106,3 +106,11 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Tag and Push Image to ECR
+        id: docker-tag  
+        env:
+          ecr_registry: ${{ steps.login-ecr.outputs.registry }}
+        run: |
+        docker tag ${{ env.ecr_repo }}:{{ env.tag }} ${{ env.ecr_registry }}/{{ env.ecr_repo }}:{{ env.tag }}
+        docker push ${{ env.ecr_registry }}/{{ env.ecr_repo }}:{{ env.tag }}
