@@ -5,12 +5,12 @@ on: # Definition of events to trigger workflows
     secrets:
       SONAR_TOKEN:
         required: true
-      SONAR_PROJECT_KEY:
-        required: true
-      SONAR_ORGANIZATION:
-        required: true
-      SONAR_HOST_URL:
-        required: true
+      # SONAR_PROJECT_KEY:
+      #   required: true
+      # SONAR_ORGANIZATION:
+      #   required: true
+      # SONAR_HOST_URL:
+      #   required: true
 
 jobs:
   validate_files:
@@ -33,9 +33,9 @@ jobs:
     env:
       NODE_VERSION: 18
 
-    permissions:
-      security-events: write
-      contents: read
+    # permissions:
+    #   security-events: write
+    #   contents: read
 
     steps:
       - name: Checkout code
