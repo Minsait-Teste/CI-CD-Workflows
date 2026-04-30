@@ -70,6 +70,7 @@ jobs:
         run: npm run build
 
       - name: Run SonarQube analysis
+        if: github.ref == 'refs/heads/main'
         run: |
           npx sonar-scanner \
             -Dsonar.host.url=https://sonarcloud.io \
